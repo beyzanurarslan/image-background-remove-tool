@@ -20,6 +20,9 @@ License:
    See the License for the specific language governing permissions and
    limitations under the License.
 """
+
+# modificated by @beyzars (Beyzanur Arslan's Version)
+
 import argparse
 import os
 import tqdm
@@ -28,6 +31,7 @@ from libs.strings import *
 from libs.networks import model_detect
 import libs.preprocessing as preprocessing
 import libs.postprocessing as postprocessing
+from PIL import Image
 
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -80,7 +84,7 @@ def __save_image_file__(img, file_name, output_path, wmode):
 
 
 def process(input_path, output_path, model_name="u2net",
-            preprocessing_method_name="bbd-fastrcnn", postprocessing_method_name="rtb-bnb"):
+            preprocessing_method_name="None", postprocessing_method_name="rtb-bnb"):
     """
     Processes the file.
     :param input_path: The path to the image / folder with the images to be processed.
@@ -103,15 +107,27 @@ def process(input_path, output_path, model_name="u2net",
     postprocessing_method = postprocessing.method_detect(postprocessing_method_name)
     wmode = __work_mode__(input_path)  # Get work mode
     if wmode == "file":  # File work mode
-        image = model.process_image(input_path, preprocessing_method, postprocessing_method)
-        __save_image_file__(image, os.path.basename(input_path), output_path, wmode)
+        try:
+            image = model.process_image(input_path, preprocessing_method, postprocessing_method)
+            new_image = Image.new("RGBA", image.size, "WHITE") # Create a white rgba background
+            new_image.paste(image, (0, 0), image)    
+            new_image.convert('RGB')
+            __save_image_file__(new_image, os.path.basename(input_path), output_path, wmode)
+        except:
+            pass
     elif wmode == "dir":  # Dir work mode
         # Start process
         files = os.listdir(input_path)
         for file in tqdm.tqdm(files, ascii=True, desc='Remove Background', unit='image'):
             file_path = os.path.join(input_path, file)
-            image = model.process_image(file_path, preprocessing_method, postprocessing_method)
-            __save_image_file__(image, file, output_path, wmode)
+            try:
+                image = model.process_image(file_path, preprocessing_method, postprocessing_method)
+                new_image = Image.new("RGBA", image.size, "WHITE") # Create a white rgba background
+                new_image.paste(image, (0, 0), image)    
+                new_image.convert('RGB')
+                __save_image_file__(new_image, file, output_path, wmode)
+            except:
+                pass
     else:
         raise Exception("Bad input parameter! Please indicate the correct path to the file or folder.")
 
@@ -129,7 +145,7 @@ def cli():
     parser.add_argument('-prep', required=False,
                         help="Preprocessing method. Can be {} . `bbd-fastrcnn` is better to use."
                         .format(PREPROCESS_METHODS),
-                        action="store", dest="preprocessing_method_name", default="bbd-fastrcnn")
+                        action="store", dest="preprocessing_method_name", default="None")
     parser.add_argument('-postp', required=False,
                         help="Postprocessing method. Can be {} ."
                              " `rtb-bnb` is better to use.".format(POSTPROCESS_METHODS),
