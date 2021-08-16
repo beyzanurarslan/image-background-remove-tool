@@ -1,5 +1,4 @@
-pywebview==3.2
-mxnet==1.6.0
+
 
 #already satisfied in collab
 """
@@ -14,4 +13,6 @@ scipy==1.4.1
 Pillow==7.1.2
 torchvision==0.2.2.post3
 gluoncv==0.7.0
+pywebview==3.2
+mxnet==1.6.0
 """
